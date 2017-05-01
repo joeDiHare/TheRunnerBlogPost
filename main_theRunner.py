@@ -101,6 +101,7 @@ def is_not_a_valid_candidate(res):
 all_comb=[]
 for L in stations:
     all_comb.append([comb for comb in combinations(L, 2)])
+all_cond_number = sum([len(x) for x in all_comb])
 
 TIME_TEST = ['06:00AM','09:00AM','05:00PM','08:00PM','10:00PM']
 RES = []
@@ -114,4 +115,4 @@ for cities_station in all_comb:
             except:
                 RES.append([st[0], st[1], None, None, None, None, None, departure_time,st[0], st[1]])
             pickle.dump(RES, open("results_theRunner.p", "wb"))
-        print(100*len(RES)/sum([len(x) for x in all_comb]))
+        print(cities_station, st[0], st[1], round(1000 * 100 * len(RES)/all_cond_number)/1000)
