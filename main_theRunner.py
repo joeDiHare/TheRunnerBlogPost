@@ -13,7 +13,7 @@ suffix={'LND':' underground station, London, UK',
 stations=[]
 for c in cities:
     tmp=[]
-    with open("/Users/joeDiHare/Documents/MATLAB/"+c+"_train_dist.csv", "r") as filestream:
+    with open("/Users/joeDiHare/Documents/TheRunnerBlogPost/"+c+"_train_dist.csv", "r") as filestream:
         for line in filestream:
             tmp = [_+suffix[c] for _ in line.split(",")]
     stations.append(tmp)
