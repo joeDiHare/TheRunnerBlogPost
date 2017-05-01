@@ -2,18 +2,19 @@ import googlemaps
 from datetime import datetime, timedelta
 from itertools import combinations
 import pickle
+import sys
 
 api_key = 'AIzaSyCmFwfAh_UA2j2uQgGtKatCBDbCERdHzHk'
 gmaps = googlemaps.Client(key=api_key)
 
-cities=['LND','NPL','WDC']
+cities=['NPL','WDC','LND']
 suffix={'LND':' underground station, London, UK',
         'NPL':' metropolitana, Napoli',
         'WDC':' metro station, USA'}
 stations=[]
 for c in cities:
     tmp=[]
-    with open("/Users/joeDiHare/Documents/TheRunnerBlogPost/"+c+"_train_dist.csv", "r") as filestream:
+    with open("/Users/stecose/Documents/TheRunnerBlogPost/"+c+"_train_dist.csv", "r") as filestream:
         for line in filestream:
             tmp = [_+suffix[c] for _ in line.split(",")]
     stations.append(tmp)
@@ -104,15 +105,40 @@ for L in stations:
 all_cond_number = sum([len(x) for x in all_comb])
 
 TIME_TEST = ['06:00AM','09:00AM','05:00PM','08:00PM','10:00PM']
-RES = []
+cond=[]
 for cities_station in all_comb:
     for st in cities_station:
         for t in TIME_TEST:
-            try:
-                departure_time = datetime.strptime('Apr 29 2017 ' + t, '%b %d %Y %I:%M%p')
-                res = compute_distance(st[0], st[1], departure_time=departure_time)
-                RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time,st[0],st[1]])
-            except:
-                RES.append([st[0], st[1], None, None, None, None, None, departure_time,st[0], st[1]])
-            pickle.dump(RES, open("results_theRunner.p", "wb"))
-        print(cities_station, st[0], st[1], round(1000 * 100 * len(RES)/all_cond_number)/1000)
+            cond.append([st[0], st[1], t, False])
+
+filename="results_theRunner.p"
+RES = pickle.load(open(filename,"rb"))
+# try:
+#     RES = pickle.load(open(filename, "rb"))
+# except NameError:
+#
+RES = []
+try:
+    compute_distance(st[0], st[1], departure_time=departure_time)
+except googlemaps.exceptions.Timeout:
+    print('rer')
+
+
+for n in cond:
+    if n[3]==False:
+        st=n[:2]
+        t=n[2]
+        try:
+            departure_time = datetime.strptime('May 22 2017 ' + t, '%b %d %Y %I:%M%p')
+            res = compute_distance(st[0], st[1], departure_time=departure_time)
+            RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time,st[0],st[1]])
+            status = 'OK'
+        except googlemaps.exceptions.Timeout:
+            print('reached quota')
+            break
+        except:
+            RES.append([st[0], st[1], None, None, None, None, None, departure_time, st[0], st[1]])
+            status = 'FAILED'
+            print(sys.exc_info()[0])
+        pickle.dump(RES, open(filename, "wb"))
+        print( round(100 * 100 * len(RES)/all_cond_number)/100,st[0], st[1],status)
