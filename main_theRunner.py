@@ -115,6 +115,11 @@ for n in cond:
         pickle.dump(RES, open(filename, "wb"))
         print( round(100 * 100 * len(RES)/all_cond_number)/100,st[0], st[1],status)
 
+
+######################################
+# Get travel time for all combinations
+######################################
+
 sched, lnd_st = [], []
 with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-stations.csv', 'r') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',')
@@ -122,3 +127,30 @@ with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-station
 with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-travel-time.csv', 'r') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',')
     for row in spamreader: sched.append(row)
+ # create table of conditions
+TIME_TEST = ['08:00AM','05:00PM','08:00PM']
+RES, cond =[], []
+for n in sched[1::]:
+    for t in TIME_TEST:
+        cond.append([lnd_st[int(n[0])][3], lnd_st[int(n[1])][3], t]+ n)
+for n in cond:
+    departure_time = datetime.strptime('Jun 7 2017 ' + n[2], '%b %d %Y %I:%M%p')
+    res = compute_distance(n[0]+' underground station, London, UK', n[1]+' underground station, London, UK', departure_time=departure_time)
+    RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time])
+
+# res = {}
+# place1=n[0]
+# place2=n[1]
+# transit_mode='rail'
+# # for mode in ["walking", "transit"]:
+# directions_result = gmaps.directions(place1, place2, mode='walking', transit_mode=transit_mode, departure_time=departure_time)
+# res['duration_walking'] = directions_result[0]['legs'][0]['duration']['text']
+# res['distance_walking'] = directions_result[0]['legs'][0]['distance']['text']
+# directions_result = gmaps.directions(place1, place2, mode='transit', transit_mode=transit_mode, departure_time=departure_time)
+# res['duration_transit'] = directions_result[0]['legs'][0]['duration']['text']
+# res['distance_transit'] = directions_result[0]['legs'][0]['distance']['text']
+# res['place1'] = place1
+# res['place2'] = place2
+# # res['transit_mode'] = transit_mode
+# res['departure_time'] = departure_time
+
