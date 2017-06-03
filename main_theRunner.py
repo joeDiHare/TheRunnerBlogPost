@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from itertools import combinations
 import pickle
 import sys
+import csv
+
 
 api_key = 'AIzaSyCmFwfAh_UA2j2uQgGtKatCBDbCERdHzHk'
 gmaps = googlemaps.Client(key=api_key)
@@ -33,7 +35,6 @@ def test_combinations(place1, place2):
     except:
         print('some other error')
         return False
-
 
 def compute_distance(place1, place2, departure_time=datetime.today()+timedelta(days=7), transit_mode='rail'):
     res = {}
@@ -113,3 +114,11 @@ for n in cond:
             print(sys.exc_info()[0])
         pickle.dump(RES, open(filename, "wb"))
         print( round(100 * 100 * len(RES)/all_cond_number)/100,st[0], st[1],status)
+
+sched, lnd_st = [], []
+with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-stations.csv', 'r') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',')
+    for row in spamreader: lnd_st.append(row)
+with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-travel-time.csv', 'r') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',')
+    for row in spamreader: sched.append(row)
