@@ -4,6 +4,8 @@ from itertools import combinations
 import pickle
 import sys
 import csv
+import pandas as pd
+from pandas import DataFrame
 
 
 api_key = 'AIzaSyCmFwfAh_UA2j2uQgGtKatCBDbCERdHzHk'
@@ -84,41 +86,46 @@ for cities_station in all_comb:
             cond.append([st[0], st[1], t, False])
 
 filename="results_theRunner.p"
-RES = pickle.load(open(filename,"rb"))
+# RES = pickle.load(open(filename,"rb"))
 # try:
 #     RES = pickle.load(open(filename, "rb"))
 # except NameError:
 #
-RES = []
-try:
-    compute_distance(st[0], st[1], departure_time=TIME_TEST[2])
-except googlemaps.exceptions.Timeout:
-    print('rer')
-
-
-for n in cond:
-    if n[3]==False:
-        st=n[:2]
-        t=n[2]
-        try:
-            departure_time = datetime.strptime('Aug 1 2017 ' + t, '%b %d %Y %I:%M%p')
-            res = compute_distance(st[0], st[1], departure_time=departure_time)
-            RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time,st[0],st[1]])
-            status = 'OK'
-        except googlemaps.exceptions.Timeout:
-            print('reached quota')
-            break
-        except:
-            RES.append([st[0], st[1], None, None, None, None, None, departure_time, st[0], st[1]])
-            status = 'FAILED'
-            print(sys.exc_info()[0])
-        pickle.dump(RES, open(filename, "wb"))
-        print( round(100 * 100 * len(RES)/all_cond_number)/100,st[0], st[1],status)
+# RES = []
+# for n in cond:
+#     if n[3]==False:
+#         st=n[:2]
+#         t=n[2]
+#         try:
+#             departure_time = datetime.strptime('Aug 1 2017 ' + t, '%b %d %Y %I:%M%p')
+#             res = compute_distance(st[0], st[1], departure_time=departure_time)
+#             RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time,st[0],st[1]])
+#             status = 'OK'
+#         except googlemaps.exceptions.Timeout:
+#             print('reached quota')
+#             break
+#         except:
+#             RES.append([st[0], st[1], None, None, None, None, None, departure_time, st[0], st[1]])
+#             status = 'FAILED'
+#             print(sys.exc_info()[0])
+#         # pickle.dump(RES, open(filename, "wb"))
+#         print( round(100 * 100 * len(RES)/all_cond_number)/100,st[0], st[1],status)
 
 
 ######################################
 # Get travel time for all combinations
 ######################################
+def parse_time(time):
+    # parse time (string) to integer value in minutes
+    spl_time = time.split(' ')
+    h, m = 0, 0
+    for i, s in enumerate(spl_time):
+        if 'hour' == s[:4]:
+            h = int(spl_time[i - 1]) * 60
+    for i, s in enumerate(spl_time):
+        if 'min' == s[:3]:
+            m = float(spl_time[i - 1])
+    return h+m
 
 sched, lnd_st = [], []
 with open('/Users/joeDiHare/Documents/TheRunnerBlogPost/data/underground-stations.csv', 'r') as csvfile:
@@ -133,24 +140,29 @@ RES, cond =[], []
 for n in sched[1::]:
     for t in TIME_TEST:
         cond.append([lnd_st[int(n[0])][3], lnd_st[int(n[1])][3], t]+ n)
-for n in cond:
+for n in cond[432::]:
     departure_time = datetime.strptime('Jun 7 2017 ' + n[2], '%b %d %Y %I:%M%p')
     res = compute_distance(n[0]+' underground station, London, UK', n[1]+' underground station, London, UK', departure_time=departure_time)
-    RES.append([res['place1'],res['place2'],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],departure_time])
+    RES.append([n[0],n[1],
+                res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit'],
+                parse_time(res['duration_walking'])/parse_time(res['duration_transit'])])
 
-# res = {}
-# place1=n[0]
-# place2=n[1]
-# transit_mode='rail'
-# # for mode in ["walking", "transit"]:
-# directions_result = gmaps.directions(place1, place2, mode='walking', transit_mode=transit_mode, departure_time=departure_time)
-# res['duration_walking'] = directions_result[0]['legs'][0]['duration']['text']
-# res['distance_walking'] = directions_result[0]['legs'][0]['distance']['text']
-# directions_result = gmaps.directions(place1, place2, mode='transit', transit_mode=transit_mode, departure_time=departure_time)
-# res['duration_transit'] = directions_result[0]['legs'][0]['duration']['text']
-# res['distance_transit'] = directions_result[0]['legs'][0]['distance']['text']
-# res['place1'] = place1
-# res['place2'] = place2
-# # res['transit_mode'] = transit_mode
-# res['departure_time'] = departure_time
+# n=['Mansion House','Cannon Street']
+# for t in TIME_TEST:
+#     departure_time = datetime.strptime('Jun 7 2017 ' + t, '%b %d %Y %I:%M%p')
+#     res = compute_distance(n[0] + ' underground station, London, UK', n[1] + ' underground station, London, UK',
+#                            departure_time=departure_time)
+#     print([n[0],n[1],res['departure_time'],res['duration_walking'],res['distance_walking'],res['duration_transit'],res['distance_transit']])
+
+
+
+sel, R=[], []
+for n in RES:
+    R.append(n + [parse_time(n[3])/parse_time(n[5])])
+    if R[-1][-1]<=2.5:
+        sel.append(R[-1])
+        print(sel[-1])
+
+headers=['from','to','dep_time','dur_walking','dis_walking','dur_transit','dist_transit','ratio']
+df = DataFrame(RES, columns=headers)
 
